@@ -62,13 +62,12 @@ function search(query, page) {
 }
 function getHome() {
   return Promise.all([
-    _get("/").then(function(h) { return { id: "popular", title: "Popular Donghua", items: _items(h) }; }),
-    _get("/?order=update").then(function(h) { return { id: "latest", title: "Latest Release", items: _items(h) }; })
+    _get("/anime/?page=1&order=popular").then(function(h) { return { id: "popular", title: "Popular Donghua", items: _items(h) }; }),
+    _get("/anime/?page=1&order=update").then(function(h) { return { id: "latest", title: "Latest Release", items: _items(h) }; })
   ]).catch(function() { return []; });
 }
 function getHomePage(rowId, page) {
-  var p = page && page > 1 ? "/page/" + page + "/" : "/";
-  if (rowId === "latest") p += "?order=update";
+  var p = "/anime/?page=" + (page && page > 0 ? page : 1) + "&order=" + (rowId === "latest" ? "update" : "popular");
   return _get(p).then(_items).catch(function() { return []; });
 }
 function _parseEpisodes(html) {
