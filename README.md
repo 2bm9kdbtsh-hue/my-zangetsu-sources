@@ -2,11 +2,15 @@
 
 Personal source index for Zangetsu.
 
-## Included provider
+## Included providers
 
 - **Top Cinema** (topcinemaa) — Arabic movie source.
-- Provider file: providers/topcinemaa.js
-- Version: 1.0.3
+  - File: `providers/topcinemaa.js`
+  - Version: 1.3.4
+- **NXX Hentai (Catalog Only)** (nxxhentai) — Arabic +18 metadata catalog only.
+  - File: `providers/nxxhentai.js`
+  - Version: 1.0.0
+  - Lists titles, episode labels, covers, and detail-page metadata only. It intentionally has no video-source extraction or playback implementation.
 
 ## Add to Zangetsu
 
@@ -14,12 +18,10 @@ Use this repository's raw index.json URL as the custom source index:
 
 https://raw.githubusercontent.com/2bm9kdbtsh-hue/my-zangetsu-sources/main/index.json
 
-## Validation
+## Validation and runtime notes
 
-- JavaScript syntax was checked successfully.
-- index.json was parsed successfully.
-- GitHub write access was tested and the temporary test file was removed.
-
-## Runtime limitation
-
-The provider has not yet been executed inside Zangetsu v2.3.6. Search, details, server discovery, and playback extraction must still be confirmed in the app. Streaming hosts may change their page structure or block requests, so successful parsing does not guarantee every title will play.
+- Provider files use the same basic fetch and metadata interface as the existing source.
+- The NXX Hentai provider has not been executed inside Zangetsu v2.3.6.
+- Search, pagination, images, and detail parsing still require confirmation in the app.
+- The NXX Hentai entry is marked NSFW (+18) in the source index.
+- Catalog parsing does not guarantee that all site pages are available or that the site keeps the same markup.
