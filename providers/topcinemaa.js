@@ -83,13 +83,13 @@ function mediaUrls(data,base){
 function resolveVideoTube(embedUrl,episodeUrl){
  var origin=(String(embedUrl).match(/^(https?:\/\/[^/]+)/i)||[])[1]||"";
  if(!origin)return Promise.resolve([]);
- return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml","browser":true}})
+ return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml"},browser:true})
   .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube embed HTTP "+(r&&r.status));return r.text();})
   .then(function(html){
    var id=(String(html).match(/data-id\s*=\s*["'](\d+)["']/i)||String(html).match(/(?:video|file|stream)[_-]?id\s*[:=]\s*["']?(\d+)/i)||[])[1];
    if(!id)throw new Error("VideoTube: numeric data-id not found");
    function request(path){
-    return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*","browser":true}})
+    return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*"},browser:true})
      .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube API HTTP "+(r&&r.status));return r.json();})
      .then(function(data){
       var urls=mediaUrls(data,origin);
