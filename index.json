@@ -1,24 +1,15 @@
 {
   "name": "My Zangetsu Sources",
-  "description": "My personal streaming sources",
+  "description": "Personal Zangetsu provider repository",
   "sources": [
     {
       "id": "topcinemaa",
       "name": "Top Cinema",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "type": "movie",
       "lang": "ar",
       "file": "providers/topcinemaa.js",
       "nsfw": false
-    },
-    {
-      "id": "nxxhentai",
-      "name": "NXX Hentai",
-      "version": "1.0.0",
-      "type": "anime",
-      "lang": "en",
-      "file": "providers/nxxhentai.js",
-      "nsfw": true
     }
   ]
 }
