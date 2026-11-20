@@ -1,198 +1,63 @@
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
-
-function getInfo() {
-  return {
-    name: "Top Cinema",
-    lang: "ar",
-    baseUrl: BASE_URL,
-    type: "movie",
-    version: "1.0.3"
-  };
+var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
+function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.1.0"};}
+function absoluteUrl(url,base){
+ if(!url)return ""; url=String(url).trim();
+ if(/^(?:javascript:|mailto:|#)/i.test(url))return "";
+ if(url.indexOf("//")===0)return "https:"+url;
+ if(/^https?:\/\//i.test(url))return url;
+ return (base||BASE_URL)+(url.charAt(0)==="/ "?"":url.charAt(0)==="/"?"":"/")+url;
 }
-
-function absoluteUrl(url) {
-  if (!url) return "";
-  url = String(url).trim();
-  if (url.indexOf("//") === 0) return "https:" + url;
-  if (/^https?:\/\//i.test(url)) return url;
-  return BASE_URL + (url.charAt(0) === "/" ? "" : "/") + url;
+function decodeText(v){return String(v||"").replace(/&nbsp;|&#160;/gi," ").replace(/&amp;/gi,"&").replace(/&quot;/gi,'"').replace(/&#0*39;|&#8217;|&apos;/gi,"'").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(+n);}).replace(/&#x([\da-f]+);/gi,function(_,n){return String.fromCharCode(parseInt(n,16));});}
+function cleanText(v){return decodeText(String(v||"").replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," ")).replace(/\s+/g," ").trim();}
+function getPage(url,ref){return fetch(absoluteUrl(url),{headers:{"User-Agent":UA,"Referer":ref||BASE_URL+"/"}}).then(function(r){if(!r||(r.status&&r.status>=400))throw new Error("HTTP "+(r&&r.status));if(typeof r.text==="function")return r.text();return typeof r.text==="string"?r.text:(r.body||"");});}
+function attr(tag,name){var m=String(tag||"").match(new RegExp("(?:^|\\s)"+name+"\\s*=\\s*[\"']([^\"']*)[\"']","i"));return m?decodeText(m[1]):"";}
+function isMovieTitle(t){return !!t&&!/(?:مسلسل|انمي|أنمي|الحلقة|الموسم|season|episode|series|\\bS\\d{1,2}E\\d{1,2}\\b)/i.test(t);}
+function parseItems(html){
+ var out=[],seen={},re=/<a\\b[^>]*>[\\s\\S]*?<\\/a>/gi,m;
+ while((m=re.exec(String(html||"")))!==null){
+  var block=m[0],open=(block.match(/^<a\\b[^>]*>/i)||[])[0]||"",href=absoluteUrl(attr(open,"href"));
+  if(!href||href.indexOf("topcinemaa.one")<0||seen[href]||/\\/category\\/|\\/tag\\/|\\/page\\/|[?&]s=/i.test(href))continue;
+  var img=(block.match(/<img\\b[^>]*>/i)||[])[0]||"",title=cleanText(attr(img,"alt")||attr(img,"title"));
+  if(!title)title=cleanText((block.match(/<h[1-6]\\b[^>]*>([\\s\\S]*?)<\\/h[1-6]>/i)||[])[1]||"");
+  if(!isMovieTitle(title))continue;
+  var image=attr(img,"data-src")||attr(img,"data-lazy-src")||attr(img,"src");
+  seen[href]=1;out.push({id:href,title:title,url:href,cover:image?absoluteUrl(image):null,type:"movie",sourceId:SOURCE_ID});
+  if(out.length>=60)break;
+ }
+ return out;
 }
-
-function decodeText(value) {
-  return String(value || "")
-    .replace(/&nbsp;|&#160;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#039;|&#8217;|&apos;/gi, "'")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&#(\d+);/g, function (_, n) { return String.fromCharCode(Number(n)); })
-    .replace(/&#x([\da-f]+);/gi, function (_, n) { return String.fromCharCode(parseInt(n, 16)); });
+function search(q,page){if(!q)return Promise.resolve([]);return getPage(BASE_URL+"/?s="+encodeURIComponent(q)+(page&&page>1?"&paged="+page:"")).then(parseItems).catch(function(){return [];});}
+function categoryRows(html){
+ var rows=[],seen={},re=/<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi,m;
+ while((m=re.exec(String(html||"")))!==null){var label=cleanText(m[2]),href=absoluteUrl(m[1]);if(!/^افلام/.test(label)||!href||!/\\/category\\//.test(href)||seen[href])continue;seen[href]=1;rows.push({id:href,title:label});}
+ return rows;
 }
-
-function cleanText(value) {
-  return decodeText(String(value || "")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " "))
-    .replace(/\s+/g, " ").trim();
-}
-
-function getPage(url) {
-  return fetch(absoluteUrl(url), {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      "Referer": BASE_URL + "/"
-    }
-  }).then(function (response) {
-    if (!response || response.status >= 400) throw new Error("HTTP error");
-    if (typeof response.text === "function") return response.text();
-    if (typeof response.text === "string") return response.text;
-    return response.body || "";
-  });
-}
-
-function attr(tag, name) {
-  var re = new RegExp(name + "=[\"']([^\"']*)[\"']", "i");
-  var match = String(tag || "").match(re);
-  return match ? decodeText(match[1]) : "";
-}
-
-function parseItems(html) {
-  var results = [];
-  var seen = {};
-  var blocks = String(html || "").match(/<a\b[^>]*>[\s\S]*?<\/a>/gi) || [];
-
-  blocks.forEach(function (block) {
-    var open = block.match(/^<a\b[^>]*>/i);
-    if (!open) return;
-    var href = absoluteUrl(attr(open[0], "href"));
-    if (!href || !/^https?:\/\//i.test(href)) return;
-    if (href.indexOf("topcinemaa.one") === -1 || href === BASE_URL + "/" || seen[href]) return;
-    if (/\/category\/|\/tag\/|\/page\/|\?s=/i.test(href)) return;
-
-    var img = block.match(/<img\b[^>]*>/i);
-    var title = img ? (attr(img[0], "alt") || attr(img[0], "title")) : "";
-    if (!title) {
-      var heading = block.match(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i);
-      title = heading ? cleanText(heading[1]) : cleanText(block);
-    }
-    if (!title || title.length < 2) return;
-    if (/مسلسل|انمي|أنمي|الحلقة|الموسم|season|episode/i.test(title)) return;
-
-    var image = img ? (attr(img[0], "data-src") || attr(img[0], "data-lazy-src") || attr(img[0], "src")) : "";
-    seen[href] = true;
-    results.push({
-      id: href,
-      title: title,
-      url: href,
-      cover: image ? absoluteUrl(image) : null,
-      type: "movie",
-      sourceId: SOURCE_ID
-    });
-  });
-  return results.slice(0, 50);
-}
-
-function search(query, page) {
-  if (!query) return Promise.resolve([]);
-  var url = BASE_URL + "/?s=" + encodeURIComponent(query) +
-    (page && page > 1 ? "&paged=" + page : "");
-  return getPage(url).then(parseItems).catch(function () { return []; });
-}
-
-function getHome() {
-  return getPage(BASE_URL + "/").then(function (html) {
-    var items = parseItems(html);
-    return items.length ? [{ id: "latest", title: "أحدث الإضافات", items: items }] : [];
-  }).catch(function () { return []; });
-}
-
-function getDetail(url) {
-  return getPage(url).then(function (html) {
-    var title = (html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i) || [])[1] ||
-      (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || "";
-    var cover = (html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i) || [])[1] || "";
-    var description = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i) || [])[1] || "";
-    var watchLinks = [];
-    var linkRe = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-    var match;
-    while ((match = linkRe.exec(html)) !== null) {
-      var label = cleanText(match[2]);
-      var href = absoluteUrl(match[1]);
-      if (/مشاهدة|السيرفر|watch|play|تحميل/i.test(label) && href) {
-        watchLinks.push({ id: href, title: label || "مشاهدة", url: href, type: "movie", sourceId: SOURCE_ID });
-      }
-    }
-    return {
-      id: url,
-      title: cleanText(title),
-      url: url,
-      cover: cover ? absoluteUrl(cover) : null,
-      description: cleanText(description),
-      type: "movie",
-      sourceId: SOURCE_ID,
-      episodes: watchLinks
-    };
-  }).catch(function () {
-    return { id: url, title: "", url: url, type: "movie", sourceId: SOURCE_ID, episodes: [] };
-  });
-}
-
-function getEpisodes(url) {
-  return getPage(url).then(function (html) {
-    var found = [];
-    var seen = {};
-    var re = /<(?:iframe|source)\b[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*>/gi;
-    var match;
-    while ((match = re.exec(html)) !== null) {
-      var link = absoluteUrl(match[1]);
-      if (link && !seen[link]) {
-        seen[link] = true;
-        found.push({ id: link, title: "مشاهدة", url: link, type: "movie", sourceId: SOURCE_ID });
-      }
-    }
-    return found;
-  }).catch(function () { return []; });
-}
-
-function getVideoSources(episodeUrl) {
-  return getPage(episodeUrl).then(function (html) {
-    var candidates = [];
-    var seen = {};
-    var re = /(?:src|data-src|data-url)=["']([^"']+)["']/gi;
-    var match;
-    while ((match = re.exec(html)) !== null) {
-      var link = absoluteUrl(match[1]);
-      if (!link || seen[link]) continue;
-      if (/\.(?:m3u8|mp4)(?:[?#]|$)/i.test(link) || /iframe|embed|player|stream/i.test(link)) {
-        seen[link] = true;
-        candidates.push(link);
-      }
-    }
-
-    var direct = candidates.filter(function (link) { return /\.(?:m3u8|mp4)(?:[?#]|$)/i.test(link); });
-    if (direct.length) {
-      return direct.map(function (link) {
-        return { url: link, quality: "Auto", type: /\.m3u8/i.test(link) ? "hls" : "mp4" };
-      });
-    }
-
-    var embedded = candidates.filter(function (link) { return !/\.(?:m3u8|mp4)(?:[?#]|$)/i.test(link); });
-    if (embedded.length && typeof extractVideo === "function") {
-      return Promise.all(embedded.map(function (link) {
-        return Promise.resolve(extractVideo(link, {
-          headers: { Referer: absoluteUrl(episodeUrl) }
-        })).catch(function () { return []; });
-      })).then(function (groups) {
-        return groups.reduce(function (all, group) {
-          if (Array.isArray(group)) return all.concat(group);
-          if (group) all.push(group);
-          return all;
-        }, []);
-      });
-    }
-    return [];
-  }).catch(function () { return []; });
-}
+function getHome(){return getPage(BASE_URL+"/").then(function(html){
+ var rows=[{id:"latest",title:"أحدث الأفلام",items:parseItems(html)}],cats=categoryRows(html);
+ cats.forEach(function(c){rows.push({id:c.id,title:c.title});});
+ return Promise.all(rows.map(function(row){if(row.id==="latest")return Promise.resolve(row);return getPage(row.id).then(function(h){return {id:row.id,title:row.title,items:parseItems(h)};}).catch(function(){return {id:row.id,title:row.title,items:[]};});}));
+}).catch(function(){return [];});}
+function getHomePage(rowId,page){if(!rowId||rowId==="latest")return Promise.resolve([]);var u=String(rowId)+(page>1?(String(rowId).indexOf("?")>=0?"&":"?")+"paged="+page:"");return getPage(u).then(parseItems).catch(function(){return [];});}
+function getDetail(url){return getPage(url).then(function(html){
+ var title=(html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i)||[])[1]||(html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)||[])[1]||"";
+ var cover=(html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i)||[])[1]||"",desc=(html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)||[])[1]||"";
+ var watch="",re=/<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi,m;
+ while((m=re.exec(html))!==null){var label=cleanText(m[2]),href=absoluteUrl(m[1],url);if(href&&(/مشاهدة الان|الذهاب لصفحة المشاهدة|watch/i.test(label))&&!/تحميل|download/i.test(label)){watch=href;break;}}
+ if(!watch)watch=absoluteUrl(url.replace(/\\/$/,"")+"/watch/");
+ return {id:url,title:cleanText(title),url:url,cover:cover?absoluteUrl(cover):null,description:cleanText(desc),genres:[],type:"movie",sourceId:SOURCE_ID,episodes:watch?[{id:"movie",number:1,title:"مشاهدة الفيلم",url:watch,type:"movie",sourceId:SOURCE_ID}]:[]};
+});}
+function getEpisodes(url){return getDetail(url).then(function(d){return d.episodes||[];}).catch(function(){return [];});}
+function getVideoSources(episodeUrl){return getPage(episodeUrl).then(function(html){
+ var embeds=[],seen={},re=/<iframe\\b[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*>/gi,m;
+ while((m=re.exec(html))!==null){var u=absoluteUrl(m[1],episodeUrl);if(u&&!seen[u]){seen[u]=1;embeds.push(u);}}
+ var dr=/(?:data-src|data-embed|player_url)\\s*=\\s*["']([^"']+)["']/gi,dm;
+ while((dm=dr.exec(html))!==null){var du=absoluteUrl(dm[1],episodeUrl);if(du&&!seen[du]&&/^https?:/i.test(du)){seen[du]=1;embeds.push(du);}}
+ if(!embeds.length)throw new Error("Top Cinema: watch page returned no embed");
+ if(typeof extractVideo!=="function")throw new Error("Top Cinema: extractor unavailable");
+ return Promise.all(embeds.slice(0,8).map(function(embed){return Promise.resolve(extractVideo(embed,{headers:{Referer:absoluteUrl(episodeUrl)}})).catch(function(){return []});})).then(function(groups){
+  var out=[],urls={};groups.forEach(function(g){if(!Array.isArray(g))g=g?[g]:[];g.forEach(function(s){if(s&&s.url&&!urls[s.url]){urls[s.url]=1;out.push(s);}});});
+  if(!out.length)throw new Error("Top Cinema: no playable stream extracted");return out;
+ });
+});}
