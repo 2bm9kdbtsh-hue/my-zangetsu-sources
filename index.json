@@ -19,6 +19,15 @@
       "lang": "ar",
       "file": "providers/nxxhentai.js",
       "nsfw": true
+    },
+    {
+      "id": "animexin",
+      "name": "AnimeXin",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "all",
+      "file": "providers/animexin.js",
+      "nsfw": false
     }
   ]
 }
