@@ -1,7 +1,7 @@
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
 var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
-function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.2"};}
+function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.3"};}
 function absoluteUrl(url,base){
  if(!url)return ""; url=String(url).trim();
  if(/^(?:javascript:|mailto:|#)/i.test(url))return "";
@@ -103,24 +103,45 @@ function resolveVideoTube(embedUrl,episodeUrl){
 }
 function getVideoSources(episodeUrl){
  return getPage(episodeUrl).then(function(html){
-  var candidates=[],seen={};
-  function add(u){u=absoluteUrl(u,episodeUrl);if(!u||!/^https?:/i.test(u)||seen[u]||/topcinemaa\.one\/(?:watch|download)\//i.test(u))return;seen[u]=1;candidates.push(u);}
-  var re=/<iframe\b[^>]*(?:src|data-src|data-embed)=["']([^"']+)["'][^>]*>/gi,m;
-  while((m=re.exec(html))!==null)add(m[1]);
-  var ar=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,am;
-  while((am=ar.exec(html))!==null){var label=cleanText(am[2]);if(/تحميل|download|عودة|back|تفاصيل/i.test(label))continue;if(/مشاهدة|watch|stream|server|سيرفر|okstream|videotube|dood|filelions|streamtape|updown|byse|lulu/i.test(label))add(am[1]);}
-  var dr=/(?:data-src|data-embed|player_url)=["']([^"']+)["']/gi,dm;while((dm=dr.exec(html))!==null)add(dm[1]);
-  if(!candidates.length)throw new Error("Top Cinema: no server links found");
-  var jobs=candidates.slice(0,16).map(function(u){
-   if(/(?:^|\.)vidtube\.|megaplay/i.test((u.match(/^https?:\/\/([^/]+)/i)||[])[1]||"")){
-    return resolveVideoTube(u,episodeUrl).catch(function(e){if(typeof console!=="undefined"&&console.warn)console.warn("VideoTube resolution failed",String(e));return [];});
+  var candidates=[],seen={},failures=[];
+  function add(raw,origin){
+   if(!raw)return;
+   var value=decodeText(String(raw)).split("\\/").join("/").replace(/\\u0026/gi,"&").trim();
+   value=value.replace(/^["']|["']$/g,"");
+   var u=absoluteUrl(value,episodeUrl);
+   if(!u||!/^https?:/i.test(u)||seen[u]||/topcinemaa\.one\/(?:watch|download)\//i.test(u))return;
+   var host=(u.match(/^https?:\/\/([^/:?#]+)/i)||[])[1]||"";
+   if(!host||/^(?:www\.)?topcinemaa\.one$/i.test(host))return;
+   if(!/(?:vidtube|megaplay|dood|ok\.ru|mp4upload|streamlare|filelions|updown|byse|streamtape|lulu)/i.test(host))return;
+   seen[u]=1;candidates.push({url:u,origin:origin||"page"});
+  }
+  var tagRe=/<(?:iframe|a|button|source|div|li)\b[^>]*>/gi,tm;
+  while((tm=tagRe.exec(String(html||"")))!==null){
+   var tag=tm[0],attrs=/([a-z0-9_-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi,am;
+   while((am=attrs.exec(tag))!==null){
+    var key=String(am[1]).toLowerCase(),val=am[2]!==undefined?am[2]:am[3]!==undefined?am[3]:am[4];
+    if(/^(?:src|href|data-src|data-embed|data-url|data-link|data-href|data-server|data-iframe|data-player|player_url)$/i.test(key))add(val,key);
+    if(key==="onclick"){
+     var clickUrls=String(val||"").match(/https?:\/\/[a-z0-9.-]+\.[a-z]{2,}[^\s"'<>)]*/gi)||[];
+     clickUrls.forEach(function(x){add(x,"onclick");});
+    }
    }
-   if(typeof extractVideo==="function")return Promise.resolve(extractVideo(u,{headers:{"Referer":absoluteUrl(episodeUrl)}})).catch(function(){return [];});
-   return Promise.resolve([]);
+  }
+  var urlRe=/https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:\/[^"'\\s<>)]*)?/gi,um;
+  while((um=urlRe.exec(String(html||"")))!==null)add(um[0],"inline-script");
+  if(!candidates.length)throw new Error("Top Cinema: no supported server URLs found in watch page");
+  if(typeof console!=="undefined"&&console.log)console.log("Top Cinema servers discovered",candidates.map(function(x){return x.url;}));
+  var jobs=candidates.slice(0,24).map(function(item){
+   var u=item.url,host=(u.match(/^https?:\/\/([^/:?#]+)/i)||[])[1]||"";
+   if(/(?:vidtube|megaplay)/i.test(host)){
+    return resolveVideoTube(u,episodeUrl).catch(function(e){failures.push(host+": "+String(e));if(typeof console!=="undefined"&&console.warn)console.warn("VideoTube resolution failed",String(e));return [];});
+   }
+   if(typeof extractVideo==="function")return Promise.resolve(extractVideo(u,{headers:{"Referer":absoluteUrl(episodeUrl)}})).catch(function(e){failures.push(host+": "+String(e));return [];});
+   failures.push(host+": no extractor runtime");return Promise.resolve([]);
   });
   return Promise.all(jobs).then(function(groups){
    var out=[],urls={};groups.forEach(function(g){if(!Array.isArray(g))g=g?[g]:[];g.forEach(function(s){if(s&&s.url&&!urls[s.url]){urls[s.url]=1;out.push(s);}});});
-   if(!out.length)throw new Error("Top Cinema: no supported playable server found (VideoTube and available extractors failed)");
+   if(!out.length)throw new Error("Top Cinema: no playable server. Tried "+candidates.length+" URL(s): "+failures.join(" | ").slice(0,900));
    return out;
   });
  });
