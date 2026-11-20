@@ -47,7 +47,9 @@ function getPage(url) {
     }
   }).then(function (response) {
     if (!response || response.status >= 400) throw new Error("HTTP error");
-    return response.text ? response.text() : (response.body || "");
+    if (typeof response.text === "function") return response.text();
+    if (typeof response.text === "string") return response.text;
+    return response.body || "";
   });
 }
 
