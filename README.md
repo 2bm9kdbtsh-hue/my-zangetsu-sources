@@ -12,6 +12,11 @@ Personal source index for Zangetsu.
   - Version: 1.0.0
   - Lists titles, episode labels, covers, and detail-page metadata only. It intentionally has no video-source extraction or playback implementation.
 
+- **AnimeXin** (animexin) — donghua catalog, episodes, and server extraction.
+  - File: `providers/animexin.js`
+  - Version: 1.0.0
+  - Adapted from the Yuzono AnimeXin source; runtime playback still needs confirmation in Zangetsu.
+
 ## Add to Zangetsu
 
 Use this repository's raw index.json URL as the custom source index:
