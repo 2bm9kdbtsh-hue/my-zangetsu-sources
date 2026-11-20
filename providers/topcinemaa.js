@@ -1,7 +1,7 @@
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
 var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
-function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.0"};}
+function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.1"};}
 function absoluteUrl(url,base){
  if(!url)return ""; url=String(url).trim();
  if(/^(?:javascript:|mailto:|#)/i.test(url))return "";
@@ -83,13 +83,13 @@ function mediaUrls(data,base){
 function resolveVideoTube(embedUrl,episodeUrl){
  var origin=(String(embedUrl).match(/^(https?:\/\/[^/]+)/i)||[])[1]||"";
  if(!origin)return Promise.resolve([]);
- return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml"}})
+ return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml","browser":true}})
   .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube embed HTTP "+(r&&r.status));return r.text();})
   .then(function(html){
    var id=(String(html).match(/data-id\s*=\s*["'](\d+)["']/i)||String(html).match(/(?:video|file|stream)[_-]?id\s*[:=]\s*["']?(\d+)/i)||[])[1];
    if(!id)throw new Error("VideoTube: numeric data-id not found");
    function request(path){
-    return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*"}})
+    return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*","browser":true}})
      .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube API HTTP "+(r&&r.status));return r.json();})
      .then(function(data){
       var urls=mediaUrls(data,origin);
@@ -113,7 +113,7 @@ function getVideoSources(episodeUrl){
   if(!candidates.length)throw new Error("Top Cinema: no server links found");
   var jobs=candidates.slice(0,16).map(function(u){
    if(/(?:^|\.)vidtube\.|megaplay/i.test((u.match(/^https?:\/\/([^/]+)/i)||[])[1]||"")){
-    return resolveVideoTube(u,episodeUrl).catch(function(){return [];});
+    return resolveVideoTube(u,episodeUrl).catch(function(e){if(typeof console!=="undefined"&&console.warn)console.warn("VideoTube resolution failed",String(e));return [];});
    }
    if(typeof extractVideo==="function")return Promise.resolve(extractVideo(u,{headers:{"Referer":absoluteUrl(episodeUrl)}})).catch(function(){return [];});
    return Promise.resolve([]);
