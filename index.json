@@ -10,6 +10,15 @@
       "lang": "ar",
       "file": "providers/topcinemaa.js",
       "nsfw": false
+    },
+    {
+      "id": "nxxhentai",
+      "name": "NXX Hentai (Catalog Only)",
+      "version": "1.0.0",
+      "type": "movie",
+      "lang": "ar",
+      "file": "providers/nxxhentai.js",
+      "nsfw": true
     }
   ]
 }
