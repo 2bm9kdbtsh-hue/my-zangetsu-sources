@@ -77,6 +77,7 @@ function parseItems(html) {
       title = heading ? cleanText(heading[1]) : cleanText(block);
     }
     if (!title || title.length < 2) return;
+    if (/مسلسل|انمي|أنمي|الحلقة|الموسم|season|episode/i.test(title)) return;
 
     var image = img ? (attr(img[0], "data-src") || attr(img[0], "data-lazy-src") || attr(img[0], "src")) : "";
     seen[href] = true;
