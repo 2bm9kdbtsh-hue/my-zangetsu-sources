@@ -23,7 +23,7 @@
     {
       "id": "animexin",
       "name": "AnimeXin",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "type": "anime",
       "lang": "all",
       "file": "providers/animexin.js",
