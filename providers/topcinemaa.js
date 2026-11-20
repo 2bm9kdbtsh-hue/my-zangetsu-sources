@@ -1,7 +1,7 @@
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
 var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
-function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.3"};}
+function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.4"};}
 function absoluteUrl(url,base){
  if(!url)return ""; url=String(url).trim();
  if(/^(?:javascript:|mailto:|#)/i.test(url))return "";
@@ -86,7 +86,12 @@ function resolveVideoTube(embedUrl,episodeUrl){
  return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml"},browser:true})
   .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube embed HTTP "+(r&&r.status));return r.text();})
   .then(function(html){
-   var id=(String(html).match(/data-id\s*=\s*["'](\d+)["']/i)||String(html).match(/(?:video|file|stream)[_-]?id\s*[:=]\s*["']?(\d+)/i)||[])[1];
+   var page=String(html||""),idMatch=
+    page.match(/\bdata-id\s*=\s*["']?(\d+)["']?/i)||
+    page.match(/\bdata[_-]?(?:video|file|stream)[_-]?id\s*[:=]\s*["']?(\d+)/i)||
+    page.match(/["'](?:videoId|video_id|fileId|file_id|streamId|stream_id)["']\s*:\s*["']?(\d+)/i)||
+    page.match(/\b(?:videoId|video_id|fileId|file_id|streamId|stream_id)\s*=\s*["']?(\d+)/i);
+   var id=idMatch&&idMatch[1];
    if(!id)throw new Error("VideoTube: numeric data-id not found");
    function request(path){
     return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*"},browser:true})
