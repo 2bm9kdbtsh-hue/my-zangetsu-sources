@@ -173,26 +173,31 @@ function getVideoSources(episodeUrl) {
       var tag = m[0], encoded = _attr(tag, "data-em") || _attr(tag, "value");
       if (encoded) servers.push({ name: _text(tag.replace(/<[^>]*>/g, "")) || "Server", data: encoded });
     }
-    var ifr = _iframeUrl(html, episodeUrl);
+    var iframe = _iframeUrl(html, episodeUrl);
     var jobs = servers.slice(0, 12).map(function(s) {
       return _hosterUrl(s.data, episodeUrl).then(function(u) { return { url: u, name: s.name }; }).catch(function() { return null; });
     });
-    if (!servers.length && ifr) jobs.push(Promise.resolve({ url: ifr, name: "Embedded player" }));
-    if (ifr && /dailymotion\\.com/i.test(ifr)) jobs.push(_dailymotion(ifr, episodeUrl).then(function(s) { return s.map(function(v) { return { direct: v }; }); }));
-    return Promise.all(jobs).then(function(found) {
-      var out = [], seen = {};
+    if (!servers.length && iframe && !/dailymotion\.com/i.test(iframe))
+      jobs.push(Promise.resolve({ url: iframe, name: "Embedded player" }));
+    var dm = iframe && /dailymotion\.com/i.test(iframe) ? _dailymotion(iframe, episodeUrl) : Promise.resolve([]);
+    return Promise.all([Promise.all(jobs), dm]).then(function(results) {
+      var found = results[0] || [], direct = results[1] || [], extractJobs = [], seen = {};
       found.forEach(function(x) {
         if (!x || !x.url || seen[x.url]) return;
         seen[x.url] = 1;
-        if (typeof extractVideo === "function") {
-          out.push(extractVideo(x.url, { headers: { "Referer": episodeUrl } }).then(function(v) { return v; }).catch(function() { return []; }));
-        }
+        if (typeof extractVideo === "function")
+          extractJobs.push(Promise.resolve(extractVideo(x.url, { headers: { "Referer": episodeUrl } }))
+            .catch(function() { return []; }));
       });
-      return Promise.all(out).then(function(groups) {
-        var flat = [];
-        groups.forEach(function(g) { (Array.isArray(g) ? g : g ? [g] : []).forEach(function(v) { if (v && v.url) flat.push(v); }); });
-        if (!flat.length) throw new Error("AnimeXin: no playable server returned a video");
-        return flat;
+      return Promise.all(extractJobs).then(function(groups) {
+        var out = direct.slice();
+        groups.forEach(function(g) {
+          (Array.isArray(g) ? g : g ? [g] : []).forEach(function(v) {
+            if (v && v.url && !out.some(function(x) { return x.url === v.url; })) out.push(v);
+          });
+        });
+        if (!out.length) throw new Error("AnimeXin: no playable server returned a video");
+        return out;
       });
     });
   });
