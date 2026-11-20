@@ -127,7 +127,7 @@ function getVideoSources(episodeUrl){
     }
    }
   }
-  var urlRe=/https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:\/[^"'\\s<>)]*)?/gi,um;
+  var urlRe=/https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:\/[^"'\s<>)]*)?/gi,um;
   while((um=urlRe.exec(String(html||"")))!==null)add(um[0],"inline-script");
   if(!candidates.length)throw new Error("Top Cinema: no supported server URLs found in watch page");
   if(typeof console!=="undefined"&&console.log)console.log("Top Cinema servers discovered",candidates.map(function(x){return x.url;}));
