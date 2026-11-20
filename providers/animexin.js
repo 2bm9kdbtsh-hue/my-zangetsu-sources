@@ -5,7 +5,7 @@ var SOURCE_ID = "animexin";
 var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
 
 function getInfo() {
-  return { name: "AnimeXin", lang: "all", baseUrl: BASE_URL, type: "anime", version: "1.0.0" };
+  return { name: "AnimeXin", lang: "all", baseUrl: BASE_URL, type: "anime", version: "1.0.1" };
 }
 function _abs(url, base) {
   if (!url) return "";
@@ -124,6 +124,48 @@ function _hosterUrl(encoded, referer) {
   if (plain) return _get(plain[0], referer).then(function(h) { return _iframeUrl(h, plain[0]) || plain[0]; });
   return Promise.reject(new Error("AnimeXin: could not decode server embed"));
 }
+
+function _dailymotion(embedUrl, episodeUrl) {
+  var vm = String(embedUrl || "").match(/[?&]video=([a-zA-Z0-9]+)/i) || String(embedUrl || "").match(/\/video\/([a-zA-Z0-9]+)/i);
+  var videoId = vm && vm[1];
+  if (!videoId) return Promise.resolve([]);
+  var embedder = String(episodeUrl || BASE_URL + "/");
+  var api = "https://geo.dailymotion.com/video/" + encodeURIComponent(videoId) + ".json?legacy=true&embedder=" + encodeURIComponent(embedder);
+  return fetch(api, { headers: { "User-Agent": UA, "Referer": embedder } }).then(function(r) {
+    if (!r || (r.status && r.status >= 400)) throw new Error("Dailymotion metadata HTTP " + (r && r.status));
+    return JSON.parse(String(r.body || (typeof r.text === "string" ? r.text : "")));
+  }).then(function(data) {
+    var master = data && data.qualities && data.qualities.auto && data.qualities.auto[0] && data.qualities.auto[0].url;
+    if (!master) throw new Error("Dailymotion returned no HLS manifest");
+    return _get(master, "https://geo.dailymotion.com/").then(function(playlist) {
+      var lines = String(playlist || "").split(/\r?\n/), out = [];
+      for (var i = 0; i < lines.length; i++) {
+        var line = String(lines[i] || "").trim();
+        if (line.indexOf("#EXT-X-STREAM-INF") !== 0) continue;
+        var nm = line.match(/NAME="?([0-9]{3,4})"?/), res = line.match(/RESOLUTION=\d+x(\d+)/);
+        var q = nm ? nm[1] : (res ? res[1] : ""), h = q ? parseInt(q, 10) : 0;
+        if (h && h > 1080) continue;
+        var variant = String(lines[i + 1] || "").trim().split("#")[0];
+        if (!variant || variant.charAt(0) === "#") continue;
+        if (!/^https?:\/\//i.test(variant)) {
+          var base = master.match(/^(https?:\/\/[^/]+\/)/i);
+          variant = base ? base[1] + variant.replace(/^\//, "") : variant;
+        }
+        out.push({ url: variant, quality: q ? q + "p" : "auto", container: "hls",
+          headers: { "User-Agent": UA, "Referer": "https://geo.dailymotion.com/" },
+          kind: "sub", audioLang: "und", subtitles: [] });
+      }
+      if (!out.length) out.push({ url: master, quality: "auto", container: "hls",
+        headers: { "User-Agent": UA, "Referer": "https://geo.dailymotion.com/" },
+        kind: "sub", audioLang: "und", subtitles: [] });
+      return out;
+    });
+  }).catch(function(e) {
+    if (typeof console !== "undefined" && console.warn) console.warn("AnimeXin Dailymotion:", String(e));
+    return [];
+  });
+}
+
 function getVideoSources(episodeUrl) {
   return _get(episodeUrl).then(function(html) {
     var servers = [], re = /<(option|a)\b[^>]*(?:data-em|data-index)[^>]*>/gi, m;
@@ -136,6 +178,7 @@ function getVideoSources(episodeUrl) {
       return _hosterUrl(s.data, episodeUrl).then(function(u) { return { url: u, name: s.name }; }).catch(function() { return null; });
     });
     if (!servers.length && ifr) jobs.push(Promise.resolve({ url: ifr, name: "Embedded player" }));
+    if (ifr && /dailymotion\\.com/i.test(ifr)) jobs.push(_dailymotion(ifr, episodeUrl).then(function(s) { return s.map(function(v) { return { direct: v }; }); }));
     return Promise.all(jobs).then(function(found) {
       var out = [], seen = {};
       found.forEach(function(x) {
