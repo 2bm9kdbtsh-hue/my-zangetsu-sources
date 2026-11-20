@@ -68,7 +68,7 @@ function mediaUrls(data,base){
   if(depth>6||v==null)return;
   if(typeof v==="string"){
    var s=v.trim();
-   if(/^https?:\\/\\//i.test(s)&&/(?:\\.m3u8(?:[?#]|$)|\\.mp4(?:[?#]|$)|\\.m4v(?:[?#]|$)|\\.mpd(?:[?#]|$))/i.test(s)){
+   if(/^https?:\/\//i.test(s)&&/(?:\.m3u8(?:[?#]|$)|\.mp4(?:[?#]|$)|\.m4v(?:[?#]|$)|\.mpd(?:[?#]|$))/i.test(s)){
     var u=absoluteUrl(s,base);if(u&&!seen[u]){seen[u]=1;out.push(u);}
    }
    return;
@@ -81,12 +81,12 @@ function mediaUrls(data,base){
  walk(data,0);return out;
 }
 function resolveVideoTube(embedUrl,episodeUrl){
- var origin=(String(embedUrl).match(/^(https?:\\/\\/[^/]+)/i)||[])[1]||"";
+ var origin=(String(embedUrl).match(/^(https?:\/\/[^/]+)/i)||[])[1]||"";
  if(!origin)return Promise.resolve([]);
  return fetch(embedUrl,{headers:{"User-Agent":UA,"Referer":episodeUrl||BASE_URL+"/","Accept":"text/html,application/xhtml+xml"}})
   .then(function(r){if(!r||r.status>=400)throw new Error("VideoTube embed HTTP "+(r&&r.status));return r.text();})
   .then(function(html){
-   var id=(String(html).match(/data-id\\s*=\\s*["'](\\d+)["']/i)||String(html).match(/(?:video|file|stream)[_-]?id\\s*[:=]\\s*["']?(\\d+)/i)||[])[1];
+   var id=(String(html).match(/data-id\s*=\s*["'](\d+)["']/i)||String(html).match(/(?:video|file|stream)[_-]?id\s*[:=]\s*["']?(\d+)/i)||[])[1];
    if(!id)throw new Error("VideoTube: numeric data-id not found");
    function request(path){
     return fetch(origin+path,{headers:{"User-Agent":UA,"Referer":embedUrl,"Origin":origin,"X-Requested-With":"XMLHttpRequest","Accept":"application/json, text/plain, */*"}})
@@ -94,7 +94,7 @@ function resolveVideoTube(embedUrl,episodeUrl){
      .then(function(data){
       var urls=mediaUrls(data,origin);
       if(!urls.length)throw new Error("VideoTube API returned no media URL");
-      return urls.map(function(u){return {url:u,quality:"Auto",container:/\\.m3u8(?:[?#]|$)/i.test(u)?"hls":/\\.mp4(?:[?#]|$)/i.test(u)?"mp4":"unknown",headers:{"Referer":embedUrl,"Origin":origin},label:"VideoTube"};});
+      return urls.map(function(u){return {url:u,quality:"Auto",container:/\.m3u8(?:[?#]|$)/i.test(u)?"hls":/\.mp4(?:[?#]|$)/i.test(u)?"mp4":"unknown",headers:{"Referer":embedUrl,"Origin":origin},label:"VideoTube"};});
      });
    }
    return request("/stream/getSourcesNew?id="+encodeURIComponent(id))
@@ -104,15 +104,15 @@ function resolveVideoTube(embedUrl,episodeUrl){
 function getVideoSources(episodeUrl){
  return getPage(episodeUrl).then(function(html){
   var candidates=[],seen={};
-  function add(u){u=absoluteUrl(u,episodeUrl);if(!u||!/^https?:/i.test(u)||seen[u]||/topcinemaa\\.one\\/(?:watch|download)\\//i.test(u))return;seen[u]=1;candidates.push(u);}
-  var re=/<iframe\\b[^>]*(?:src|data-src|data-embed)=["']([^"']+)["'][^>]*>/gi,m;
+  function add(u){u=absoluteUrl(u,episodeUrl);if(!u||!/^https?:/i.test(u)||seen[u]||/topcinemaa\.one\/(?:watch|download)\//i.test(u))return;seen[u]=1;candidates.push(u);}
+  var re=/<iframe\b[^>]*(?:src|data-src|data-embed)=["']([^"']+)["'][^>]*>/gi,m;
   while((m=re.exec(html))!==null)add(m[1]);
-  var ar=/<a\\b[^>]*href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi,am;
+  var ar=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,am;
   while((am=ar.exec(html))!==null){var label=cleanText(am[2]);if(/تحميل|download|عودة|back|تفاصيل/i.test(label))continue;if(/مشاهدة|watch|stream|server|سيرفر|okstream|videotube|dood|filelions|streamtape|updown|byse|lulu/i.test(label))add(am[1]);}
   var dr=/(?:data-src|data-embed|player_url)=["']([^"']+)["']/gi,dm;while((dm=dr.exec(html))!==null)add(dm[1]);
   if(!candidates.length)throw new Error("Top Cinema: no server links found");
   var jobs=candidates.slice(0,16).map(function(u){
-   if(/(?:^|\\.)vidtube\\.|megaplay/i.test((u.match(/^https?:\\/\\/([^/]+)/i)||[])[1]||"")){
+   if(/(?:^|\.)vidtube\.|megaplay/i.test((u.match(/^https?:\/\/([^/]+)/i)||[])[1]||"")){
     return resolveVideoTube(u,episodeUrl).catch(function(){return [];});
    }
    if(typeof extractVideo==="function")return Promise.resolve(extractVideo(u,{headers:{"Referer":absoluteUrl(episodeUrl)}})).catch(function(){return [];});
