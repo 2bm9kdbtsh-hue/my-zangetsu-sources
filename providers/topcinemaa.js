@@ -1,7 +1,7 @@
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
 var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
-function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.1"};}
+function getInfo(){return {name:"Top Cinema",lang:"ar",baseUrl:BASE_URL,type:"movie",version:"1.3.2"};}
 function absoluteUrl(url,base){
  if(!url)return ""; url=String(url).trim();
  if(/^(?:javascript:|mailto:|#)/i.test(url))return "";
