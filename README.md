@@ -9,7 +9,7 @@
 | المعرّف | المصدر | النوع | ما يقدمه | التشغيل |
 |---|---|---|---|---|
 | `kitsu-anime` | Kitsu API | أنمي | بحث، قوائم، تفاصيل، صور، حلقات عند توفرها | غير متاح؛ بيانات فقط |
-| `tvmaze-series` | TVmaze API | مسلسلات | بحث، قوائم، تفاصيل، مواسم/حلقات وصور | غير متاح؛ بيانات فقط |
+| `tvmaze-series` | TVmaze API | مسلسلات | بحث، قوائم، تفاصيل، مواسم/حلقات وصور | غير متاح؛ بيانات فقط (نوع Zangetsu: movie) |
 
 الأفلام: يستخدم التطبيق بيانات Cinemeta المدمجة/إضافة Stremio الرسمية للبيانات الوصفية. هذا المستودع لا يعيد تغليفها كمصدر JavaScript مستقل.
 
@@ -27,6 +27,7 @@ https://raw.githubusercontent.com/2bm9kdbtsh-hue/my-zangetsu-sources/main/index.
 ## التوافق
 
 - بُنيت ملفات المصدر على نمط JavaScript providers المستخدم في مستودع Zangetsu الرسمي: `getInfo`, `getHome`, `search`, `getDetail`, `getEpisodes`.
+- إصدار 2.3.6 يعرّف أنواع المصادر `anime`, `movie`, `manga`, `novel` فقط؛ لذلك تُسجّل بيانات TVmaze (المسلسلات) ضمن `movie` لتظهر في قسم Movies & Series، ولا نستخدم قيمة `series` غير المدعومة.
 - الفهرس يحتفظ بمخطط `name`, `description`, `sources[]` مع `id`, `name`, `version`, `type`, `lang`, `file`, `nsfw`.
 - لا نعلن اعتماداً نهائياً على جهاز iPhone حتى يُختبر الاستيراد والتصفح على التطبيق نفسه.
 - لا توجد مفاتيح API أو بيانات دخول مخزنة في المستودع.
