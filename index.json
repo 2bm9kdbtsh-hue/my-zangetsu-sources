@@ -1,32 +1,23 @@
 {
   "name": "My Zangetsu Sources",
-  "description": "Personal Zangetsu provider repository",
+  "description": "Metadata-only anime and series providers for Zangetsu iOS",
   "sources": [
     {
-      "id": "topcinemaa",
-      "name": "Top Cinema",
-      "version": "1.4.4",
-      "type": "movie",
-      "lang": "ar",
-      "file": "providers/topcinemaa.js",
+      "id": "kitsu-anime",
+      "name": "Kitsu Anime Metadata",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "all",
+      "file": "providers/kitsu-anime.js",
       "nsfw": false
     },
     {
-      "id": "nxxhentai",
-      "name": "NXX Hentai (Catalog Only)",
+      "id": "tvmaze-series",
+      "name": "TVmaze Series Metadata",
       "version": "1.0.0",
-      "type": "movie",
-      "lang": "ar",
-      "file": "providers/nxxhentai.js",
-      "nsfw": true
-    },
-    {
-      "id": "animexin",
-      "name": "AnimeXin",
-      "version": "1.0.1",
-      "type": "anime",
-      "lang": "all",
-      "file": "providers/animexin.js",
+      "type": "series",
+      "lang": "en",
+      "file": "providers/tvmaze-series.js",
       "nsfw": false
     }
   ]

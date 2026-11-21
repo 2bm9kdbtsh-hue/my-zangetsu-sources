@@ -1,0 +1,21 @@
+name: Validate repository
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate source index
+        run: node scripts/validate.mjs
+      - name: Check provider syntax
+        run: |
+          node --check providers/kitsu-anime.js
+          node --check providers/tvmaze-series.js

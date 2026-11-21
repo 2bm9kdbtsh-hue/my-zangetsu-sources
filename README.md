@@ -1,42 +1,62 @@
 # My Zangetsu Sources
 
-Personal source index for Zangetsu. Top Cinema now parses the public movie, series, and anime catalogue pages and delegates supported external player extraction to the Zangetsu runtime.
+مستودع مصادر بيانات (Metadata) لـ **Zangetsu iOS 2.3.6**. هذا المستودع لا يوزّع ملفات فيديو ولا يستخرج روابط تشغيل من مواقع غير مصرّح بها.
 
-## Included providers
+> **الحالة الحالية:** مصدران لبيانات الأنمي والمسلسلات. لا ندّعي وجود بث أو تشغيل فيديو. بيانات اللغة والصور تعتمد على واجهات الجهات المالكة وقد لا تكون عربية دائماً.
 
-- **Top Cinema** (topcinemaa) — Arabic movie, series, and anime catalogue with external-host extraction delegated to Zangetsu.
-  - File: `providers/topcinemaa.js`
-  - Version: 1.4.0
-- **NXX Hentai (Catalog Only)** (nxxhentai) — Arabic +18 metadata catalog only.
-  - File: `providers/nxxhentai.js`
-  - Version: 1.0.0
-  - Lists titles, episode labels, covers, and detail-page metadata only. It intentionally has no video-source extraction or playback implementation.
+## المصادر
 
-- **AnimeXin** (animexin) — donghua catalog, episodes, and server extraction.
-  - File: `providers/animexin.js`
-  - Version: 1.0.0
-  - Adapted from the Yuzono AnimeXin source; runtime playback still needs confirmation in Zangetsu.
+| المعرّف | المصدر | النوع | ما يقدمه | التشغيل |
+|---|---|---|---|---|
+| `kitsu-anime` | Kitsu API | أنمي | بحث، قوائم، تفاصيل، صور، حلقات عند توفرها | غير متاح؛ بيانات فقط |
+| `tvmaze-series` | TVmaze API | مسلسلات | بحث، قوائم، تفاصيل، مواسم/حلقات وصور | غير متاح؛ بيانات فقط |
 
-## Add to Zangetsu
+الأفلام: يستخدم التطبيق بيانات Cinemeta المدمجة/إضافة Stremio الرسمية للبيانات الوصفية. هذا المستودع لا يعيد تغليفها كمصدر JavaScript مستقل.
 
-Use this repository's raw index.json URL as the custom source index:
+## التثبيت
 
+أضف رابط ملف الفهرس التالي في شاشة مستودعات المصادر داخل Zangetsu:
+
+```
 https://raw.githubusercontent.com/2bm9kdbtsh-hue/my-zangetsu-sources/main/index.json
+```
 
-## Validation and runtime notes
+إذا كان التطبيق يطلب رابط المستودع بدلاً من رابط الفهرس، استخدم رابط GitHub:
+`https://github.com/2bm9kdbtsh-hue/my-zangetsu-sources`
 
-- Provider files use the same basic fetch and metadata interface as the existing source.
-- The NXX Hentai provider has not been executed inside Zangetsu v2.3.6.
-- Search, pagination, images, and detail parsing still require confirmation in the app.
-- The NXX Hentai entry is marked NSFW (+18) in the source index.
-- Catalog parsing does not guarantee that all site pages are available or that the site keeps the same markup.
+## التوافق
 
+- بُنيت ملفات المصدر على نمط JavaScript providers المستخدم في مستودع Zangetsu الرسمي: `getInfo`, `getHome`, `search`, `getDetail`, `getEpisodes`.
+- الفهرس يحتفظ بمخطط `name`, `description`, `sources[]` مع `id`, `name`, `version`, `type`, `lang`, `file`, `nsfw`.
+- لا نعلن اعتماداً نهائياً على جهاز iPhone حتى يُختبر الاستيراد والتصفح على التطبيق نفسه.
+- لا توجد مفاتيح API أو بيانات دخول مخزنة في المستودع.
 
-## Top Cinema 1.4.0 notes
+## واجهات البيانات وشروطها
 
-- Search no longer intentionally filters out series and anime titles. Movie and series listing routes are confirmed as `/movies/` and `/series/`.
-- Home rows include the site's movie and series listing pages and detected content categories.
-- Detail parsing reads descriptions, covers, IMDb-style ratings, genres, episode links, season links, and the watch-page URL where present.
-- Playback extraction uses the provider runtime's `extractVideo` function for discovered external servers. It does not invent or call undocumented Top Cinema/VideoTube API endpoints.
-- The site's watch page currently lists VideoTube, UpDown, StreamWish, Doodstream, Filelions, Streamtape, LuluStream, Uqload, Filemoon, and Mixdrop; the provider recognizes these host families and delegates them to the installed Zangetsu `extractVideo` runtime. Direct playback still depends on runtime support and the host returning a playable media URL. The observed VideoTube embed returned HTTP 403 during external inspection.
-- This repository is a provider/index repository, not the Zangetsu application source. The separate `rabanime-zangetsu` repository associated with this account currently has an empty root (`contents: []`), so an app build and in-player playback test cannot be run from the available repositories.
+- **Kitsu:** https://kitsu.docs.apiary.io/ — استخدم البيانات وفق شروط Kitsu وحدود الخدمة.
+- **TVmaze:** https://www.tvmaze.com/api — بيانات TVmaze تخضع لشروط الإسناد والترخيص المنشورة لديهم؛ راجعها قبل إعادة النشر التجاري.
+- **Cinemeta:** https://v3-cinemeta.strem.io/manifest.json — إضافة بيانات وصفية مستقلة، وليست مزود تشغيل.
+
+## ما لم نضفه ولماذا
+
+- Top Cinema: لم نتحقق من وجود API رسمي أو إذن صريح لإعادة استخدام بيانات الموقع أو روابط المشاهدة؛ لذلك استُبعد.
+- AnimeXin: لم نتحقق من ترخيص إعادة استخدام محتوى الموقع أو آليات مشغلاته؛ لذلك استُبعد.
+- مصادر أخرى غير موثقة أو تعتمد على استخراج روابط بث من أطراف ثالثة: مستبعدة.
+
+## التحقق محلياً
+
+يتحقق سكربت CI من صحة JSON، وعدم تكرار المعرّفات، ووجود ملفات المصادر، وتوفر الدوال الأساسية:
+
+```sh
+node scripts/validate.mjs
+node --check providers/kitsu-anime.js
+node --check providers/tvmaze-series.js
+```
+
+## المساهمة
+
+أضف فقط مصادر تملك API موثقاً أو إذناً واضحاً بالتكامل. لا تضع مفاتيح سرية أو روابط حسابات خاصة في ملفات المستودع.
+
+## الترخيص
+
+كود هذا المستودع: MIT. هذا لا يمنح أي حقوق إضافية على البيانات أو الصور التي تقدمها واجهات Kitsu أو TVmaze؛ تطبق شروط كل جهة على بياناتها.
