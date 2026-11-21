@@ -252,7 +252,7 @@ function getVideoSources(episodeUrl) {
       if (!href || !/^https?:\/\//i.test(href) || seen[href]) return;
       var host = (href.match(/^https?:\/\/([^/:?#]+)/i) || [])[1] || "";
       if (!host || /(?:^|\.)topcinemaa\.one$/i.test(host)) return;
-      if (!/(?:vidtube|okstream|updown|doodstream|dood|filelions|byse|firestream|streamtape|lulu|streamwish|streamwish|uqload|filemoon|mixdrop|megaplay|mp4upload|streamlare|ok\\.ru)/i.test(host)) return;
+      if (!/(?:vidtube|okstream|updown|doodstream|dood|filelions|byse|firestream|streamtape|lulu|streamwish|uqload|filemoon|mixdrop|megaplay|mp4upload|streamlare|ok\\.ru)/i.test(host)) return;
       seen[href] = true;
       candidates.push(href);
     }
