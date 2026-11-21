@@ -21,4 +21,17 @@ jobs:
           node --check providers/nxxhentai.js
       - name: Validate source index JSON
         run: |
-          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('index.json','utf8')); if(!Array.isArray(x.sources)) process.exit(1); const p=x.sources.find(s=>s.id==='topcinemaa'); if(!p || !/^\\d+\\.\\d+\\.\\d+$/.test(p.version) || p.file!=='providers/topcinemaa.js') process.exit(1);"
+          node - <<'NODE'
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('index.json', 'utf8'));
+          if (!Array.isArray(manifest.sources)) throw new Error('index.sources must be an array');
+          const source = manifest.sources.find((item) => item.id === 'topcinemaa');
+          if (!source || !/^\\d+\\.\\d+\\.\\d+$/.test(source.version) || source.file !== 'providers/topcinemaa.js') {
+            throw new Error('Top Cinema manifest entry is invalid');
+          }
+          const provider = fs.readFileSync(source.file, 'utf8');
+          const match = provider.match(/var VERSION = ["']([^"']+)["']/);
+          if (!match || match[1] !== source.version) {
+            throw new Error('Top Cinema provider VERSION does not match index.json');
+          }
+          NODE
