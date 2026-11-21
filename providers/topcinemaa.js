@@ -15,8 +15,13 @@ function absoluteUrl(value, base) {
   if (/^(?:javascript:|mailto:|#|data:)/i.test(s)) return "";
   if (s.indexOf("//") === 0) return "https:" + s;
   if (/^https?:\/\//i.test(s)) return s;
-  var root = (base || BASE_URL).replace(/\/+$/, "");
-  return root + (s.charAt(0) === "/" ? s : "/" + s);
+  var baseUrl = base || BASE_URL;
+  if (s.charAt(0) === "/") {
+    var origin = String(baseUrl).match(/^(https?:\/\/[^/]+)/i);
+    return (origin ? origin[1] : BASE_URL) + s;
+  }
+  var root = String(baseUrl).replace(/\/+$/, "");
+  return root + "/" + s;
 }
 function decodeText(value) {
   return String(value || "").replace(/&nbsp;|&#160;/gi, " ")
