@@ -4,7 +4,7 @@ Personal source index for Zangetsu. Top Cinema now parses the public movie, seri
 
 ## Included providers
 
-- **Top Cinema** (topcinemaa) — Arabic movie source.
+- **Top Cinema** (topcinemaa) — Arabic movie, series, and anime catalogue with external-host extraction delegated to Zangetsu.
   - File: `providers/topcinemaa.js`
   - Version: 1.4.0
 - **NXX Hentai (Catalog Only)** (nxxhentai) — Arabic +18 metadata catalog only.
