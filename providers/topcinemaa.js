@@ -252,17 +252,17 @@ function getVideoSources(episodeUrl) {
     var candidates = [], seen = {}, failures = [];
     function add(raw, sourceTag) {
       if (!raw) return;
-      var value = decodeText(String(raw)).replace(/\\\\\\//g, "/").replace(/\\\\u0026/gi, "&").trim();
+      var value = decodeText(String(raw)).replace(/\\\//g, "/").replace(/\\u0026/gi, "&").trim();
       value = value.replace(/^[\"']|[\"']$/g, "");
       var href = absoluteUrl(value, episodeUrl);
-      if (!href || !/^https?:\\/\\//i.test(href) || seen[href]) return;
-      var host = (href.match(/^https?:\\/\\/([^/:?#]+)/i) || [])[1] || "";
-      if (!host || /(?:^|\\.)topcinemaa\\.one$/i.test(host)) return;
+      if (!href || !/^https?:\/\//i.test(href) || seen[href]) return;
+      var host = (href.match(/^https?:\/\/([^/:?#]+)/i) || [])[1] || "";
+      if (!host || /(?:^|\.)topcinemaa\.one$/i.test(host)) return;
       seen[href] = true;
       candidates.push({ url: href, host: host, tag: sourceTag || "page",
-        direct: /\\.(?:m3u8|mp4|m4v|mpd)(?:[?#]|$)/i.test(href) });
+        direct: /\.(?:m3u8|mp4|m4v|mpd)(?:[?#]|$)/i.test(href) });
     }
-    var tagRe = /<(?:iframe|source|video|a|button|div|li)\\b[^>]*>/gi, match;
+    var tagRe = /<(?:iframe|source|video|a|button|div|li)\b[^>]*>/gi, match;
     while ((match = tagRe.exec(String(html || ""))) !== null) {
       var tag = match[0];
       ["src", "data-src", "href", "data-url", "data-embed", "data-link",
@@ -270,7 +270,7 @@ function getVideoSources(episodeUrl) {
         add(attr(tag, key), key);
       });
     }
-    var inlineUrls = String(html || "").match(/https?:\\/?\\/?[a-z0-9.-]+\\.[a-z]{2,}(?:\\/[^"'\\s<>)]*)?/gi) || [];
+    var inlineUrls = String(html || "").match(/https?:\/?\/?[a-z0-9.-]+\.[a-z]{2,}(?:\/[^"'\s<>)]*)?/gi) || [];
     inlineUrls.forEach(function(url) { add(url, "inline"); });
     if (!candidates.length) throw new Error("Top Cinema: no server URLs found on watch page");
 
@@ -279,8 +279,8 @@ function getVideoSources(episodeUrl) {
         return Promise.resolve([{
           url: candidate.url,
           quality: "Auto",
-          container: /\\.m3u8(?:[?#]|$)/i.test(candidate.url) ? "hls" :
-            (/\\.mpd(?:[?#]|$)/i.test(candidate.url) ? "dash" : "mp4"),
+          container: /\.m3u8(?:[?#]|$)/i.test(candidate.url) ? "hls" :
+            (/\.mpd(?:[?#]|$)/i.test(candidate.url) ? "dash" : "mp4"),
           headers: { "User-Agent": UA, "Referer": episodeUrl },
           label: "Top Cinema direct"
         }]);
@@ -295,14 +295,14 @@ function getVideoSources(episodeUrl) {
         if (!Array.isArray(result)) result = result ? [result] : [];
         var mapped = [];
         result.forEach(function(source) {
-          if (!source || !source.url || !/^https?:\\/\\//i.test(String(source.url))) return;
+          if (!source || !source.url || !/^https?:\/\//i.test(String(source.url))) return;
           var mediaUrl = String(source.url);
           mapped.push({
             url: mediaUrl,
             quality: source.quality || source.label || "Auto",
-            container: source.container || (/\\.m3u8(?:[?#]|$)/i.test(mediaUrl) ? "hls" :
-              (/\\.mpd(?:[?#]|$)/i.test(mediaUrl) ? "dash" :
-                (/\\.mp4(?:[?#]|$)/i.test(mediaUrl) ? "mp4" : "unknown"))),
+            container: source.container || (/\.m3u8(?:[?#]|$)/i.test(mediaUrl) ? "hls" :
+              (/\.mpd(?:[?#]|$)/i.test(mediaUrl) ? "dash" :
+                (/\.mp4(?:[?#]|$)/i.test(mediaUrl) ? "mp4" : "unknown"))),
             headers: source.headers || { "User-Agent": UA, "Referer": candidate.url },
             subtitles: source.subtitles || [],
             kind: source.kind || "sub",
