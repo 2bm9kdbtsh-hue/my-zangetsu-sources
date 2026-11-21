@@ -48,7 +48,6 @@ function attr(tag, name) {
 function getPage(url, referer) {
   return fetch(absoluteUrl(url), {
     headers: { "User-Agent": UA, "Referer": referer || BASE_URL + "/", "Accept": "text/html,application/xhtml+xml" },
-    browser: true
   }).then(function(response) {
     if (!response || (response.status && response.status >= 400))
       throw new Error("Top Cinema HTTP " + (response && response.status));
@@ -234,6 +233,7 @@ function getDetail(url) {
 function getEpisodes(url) {
   return getDetail(url).then(function(detail) {
     if (detail.episodes && detail.episodes.length) return detail.episodes;
+    if (detail.seasons && detail.seasons.length) return detail.seasons;
     if (detail.watchUrl) return [{
       id: detail.watchUrl, number: 1, title: "مشاهدة", url: detail.watchUrl,
       type: detail.type, sourceId: SOURCE_ID
@@ -252,7 +252,7 @@ function getVideoSources(episodeUrl) {
       if (!href || !/^https?:\/\//i.test(href) || seen[href]) return;
       var host = (href.match(/^https?:\/\/([^/:?#]+)/i) || [])[1] || "";
       if (!host || /(?:^|\.)topcinemaa\.one$/i.test(host)) return;
-      if (!/(?:vidtube|okstream|updown|doodstream|dood|filelions|byse|firestream|streamtape|lulu|streamwish|mp4upload|streamlare)/i.test(host)) return;
+      if (!/(?:vidtube|okstream|updown|doodstream|dood|filelions|byse|firestream|streamtape|lulu|streamwish|streamwish|uqload|filemoon|mixdrop|megaplay|mp4upload|streamlare|ok\\.ru)/i.test(host)) return;
       seen[href] = true;
       candidates.push(href);
     }
@@ -281,7 +281,10 @@ function getVideoSources(episodeUrl) {
             url: media, quality: source.quality || source.label || "Auto",
             container: container,
             headers: source.headers || { "User-Agent": UA, "Referer": embedUrl },
-            subtitles: source.subtitles || []
+            subtitles: source.subtitles || [],
+            kind: source.kind || "sub",
+            audioLang: source.audioLang || "und",
+            label: source.label || source.quality || "Top Cinema"
           };
         }).filter(function(source) { return !!source; });
       }).catch(function() { return []; });
