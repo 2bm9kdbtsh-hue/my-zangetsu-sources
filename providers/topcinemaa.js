@@ -3,8 +3,8 @@
  */
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
-var VERSION = "1.4.3";
-var UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36";
+var VERSION = "1.4.4";
+var UA = "Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1";
 
 function getInfo() {
   return { name: "Top Cinema", lang: "ar", baseUrl: BASE_URL, type: "movie", version: VERSION };
