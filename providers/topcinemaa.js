@@ -98,6 +98,12 @@ function search(query, page) {
   if (page && page > 1) url += "&paged=" + page;
   return getPage(url).then(parseItems).catch(function() { return []; });
 }
+function popular(opts) {
+  opts = opts || {};
+  var page = opts.page && opts.page > 1 ? opts.page : 1;
+  var url = BASE_URL + "/movies/" + (page > 1 ? "page/" + page + "/" : "");
+  return getPage(url).then(parseItems);
+}
 function parseCategoryLinks(html) {
   var rows = [], seen = {}, re = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, match;
   while ((match = re.exec(String(html || ""))) !== null) {
@@ -243,65 +249,89 @@ function getEpisodes(url) {
 }
 function getVideoSources(episodeUrl) {
   return getPage(episodeUrl).then(function(html) {
-    var candidates = [], seen = {}, tagRe = /<(?:iframe|source|video|a|button|div|li)\b[^>]*>/gi, match;
-    function add(raw) {
+    var candidates = [], seen = {}, failures = [];
+    function add(raw, sourceTag) {
       if (!raw) return;
-      var value = decodeText(String(raw)).replace(/\\\//g, "/").replace(/\\u0026/gi, "&").trim();
-      value = value.replace(/^["']|["']$/g, "");
+      var value = decodeText(String(raw)).replace(/\\\\\\//g, "/").replace(/\\\\u0026/gi, "&").trim();
+      value = value.replace(/^[\"']|[\"']$/g, "");
       var href = absoluteUrl(value, episodeUrl);
-      if (!href || !/^https?:\/\//i.test(href) || seen[href]) return;
-      var host = (href.match(/^https?:\/\/([^/:?#]+)/i) || [])[1] || "";
-      if (!host || /(?:^|\.)topcinemaa\.one$/i.test(host)) return;
-      if (!/(?:vidtube|okstream|updown|doodstream|dood|filelions|byse|firestream|streamtape|lulu|streamwish|uqload|filemoon|mixdrop|megaplay|mp4upload|streamlare|ok\\.ru)/i.test(host)) return;
+      if (!href || !/^https?:\\/\\//i.test(href) || seen[href]) return;
+      var host = (href.match(/^https?:\\/\\/([^/:?#]+)/i) || [])[1] || "";
+      if (!host || /(?:^|\\.)topcinemaa\\.one$/i.test(host)) return;
       seen[href] = true;
-      candidates.push(href);
+      candidates.push({ url: href, host: host, tag: sourceTag || "page",
+        direct: /\\.(?:m3u8|mp4|m4v|mpd)(?:[?#]|$)/i.test(href) });
     }
+    var tagRe = /<(?:iframe|source|video|a|button|div|li)\\b[^>]*>/gi, match;
     while ((match = tagRe.exec(String(html || ""))) !== null) {
       var tag = match[0];
-      ["src", "data-src", "href", "data-url", "data-embed", "data-link", "data-iframe", "data-player"].forEach(function(key) {
-        add(attr(tag, key));
+      ["src", "data-src", "href", "data-url", "data-embed", "data-link",
+       "data-iframe", "data-player", "data-server"].forEach(function(key) {
+        add(attr(tag, key), key);
       });
     }
-    var inlineUrls = String(html || "").match(/https?:\\?\/\\?\/[a-z0-9.-]+\.[a-z]{2,}(?:\\?\/[^"'\\s<>)]*)?/gi) || [];
-    inlineUrls.forEach(add);
-    if (!candidates.length) throw new Error("Top Cinema: لم يتم العثور على روابط خوادم مشاهدة صالحة.");
-    if (typeof extractVideo !== "function")
-      throw new Error("Top Cinema: بيئة Zangetsu لا توفر extractVideo لاستخراج مشغلات الخوادم الخارجية.");
-    var failures = [];
-    var jobs = candidates.slice(0, 20).map(function(embedUrl) {
-      return Promise.resolve(extractVideo(embedUrl, {
+    var inlineUrls = String(html || "").match(/https?:\\/?\\/?[a-z0-9.-]+\\.[a-z]{2,}(?:\\/[^"'\\s<>)]*)?/gi) || [];
+    inlineUrls.forEach(function(url) { add(url, "inline"); });
+    if (!candidates.length) throw new Error("Top Cinema: no server URLs found on watch page");
+
+    var jobs = candidates.slice(0, 30).map(function(candidate) {
+      if (candidate.direct) {
+        return Promise.resolve([{
+          url: candidate.url,
+          quality: "Auto",
+          container: /\\.m3u8(?:[?#]|$)/i.test(candidate.url) ? "hls" :
+            (/\\.mpd(?:[?#]|$)/i.test(candidate.url) ? "dash" : "mp4"),
+          headers: { "User-Agent": UA, "Referer": episodeUrl },
+          label: "Top Cinema direct"
+        }]);
+      }
+      if (typeof extractVideo !== "function") {
+        failures.push(candidate.host + ": extractVideo helper unavailable");
+        return Promise.resolve([]);
+      }
+      return Promise.resolve(extractVideo(candidate.url, {
         headers: { "User-Agent": UA, "Referer": episodeUrl }
       })).then(function(result) {
         if (!Array.isArray(result)) result = result ? [result] : [];
-        return result.map(function(source) {
-          if (!source || !source.url) return null;
-          var media = String(source.url);
-          var container = source.container || (/\.m3u8(?:[?#]|$)/i.test(media) ? "hls" :
-            (/\.mpd(?:[?#]|$)/i.test(media) ? "dash" : (/\.mp4(?:[?#]|$)/i.test(media) ? "mp4" : "unknown")));
-          return {
-            url: media, quality: source.quality || source.label || "Auto",
-            container: container,
-            headers: source.headers || { "User-Agent": UA, "Referer": embedUrl },
+        var mapped = [];
+        result.forEach(function(source) {
+          if (!source || !source.url || !/^https?:\\/\\//i.test(String(source.url))) return;
+          var mediaUrl = String(source.url);
+          mapped.push({
+            url: mediaUrl,
+            quality: source.quality || source.label || "Auto",
+            container: source.container || (/\\.m3u8(?:[?#]|$)/i.test(mediaUrl) ? "hls" :
+              (/\\.mpd(?:[?#]|$)/i.test(mediaUrl) ? "dash" :
+                (/\\.mp4(?:[?#]|$)/i.test(mediaUrl) ? "mp4" : "unknown"))),
+            headers: source.headers || { "User-Agent": UA, "Referer": candidate.url },
             subtitles: source.subtitles || [],
             kind: source.kind || "sub",
             audioLang: source.audioLang || "und",
-            label: source.label || source.quality || "Top Cinema"
-          };
-        }).filter(function(source) { return !!source; });
-      }).catch(function() { return []; });
+            label: source.label || candidate.host
+          });
+        });
+        if (!mapped.length) failures.push(candidate.host + ": extractor returned no playable URL");
+        return mapped;
+      }).catch(function(error) {
+        failures.push(candidate.host + ": " + String(error && error.message || error));
+        return [];
+      });
     });
     return Promise.all(jobs).then(function(groups) {
       var output = [], used = {};
       groups.forEach(function(group) {
-        group.forEach(function(source) {
+        (group || []).forEach(function(source) {
           if (source && source.url && !used[source.url]) {
             used[source.url] = true;
             output.push(source);
           }
         });
       });
-      if (!output.length)
-        throw new Error("Top Cinema: لم يُرجع أي خادم رابط فيديو مباشر قابلاً للتشغيل. " + failures.join(" | ").slice(0, 700) + " قد يتطلب الخادم حماية أو استخراجاً غير مدعوم.");
+      if (!output.length) {
+        throw new Error("Top Cinema: no playable mirror. " +
+          failures.join(" | ").slice(0, 900) +
+          ". A host returning HTTP 403 is unavailable to this client; other mirrors were attempted.");
+      }
       return output;
     });
   });
