@@ -3,7 +3,7 @@
  */
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
-var VERSION = "1.4.0";
+var VERSION = "1.4.1";
 var UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36";
 
 function getInfo() {
@@ -247,6 +247,22 @@ function getEpisodes(url) {
     return [];
   });
 }
+function hasBundledExtractor(host) {
+  host = String(host || "").toLowerCase().replace(/^www\\./, "");
+  var supported = [
+    "dood.to", "dood.so", "dood.ws", "dood.la", "dood.li", "dood.cx",
+    "dood.sh", "dood.wf", "dood.yt", "dood.pm", "dood.re", "dood.watch",
+    "dood.work", "doodstream.com", "doods.pro", "dsvplay.com", "ds2play.com",
+    "ds2video.com", "d000d.com", "d0000d.com", "dooood.com", "vide0.net",
+    "ok.ru", "odnoklassniki.ru", "mp4upload.com", "streamlare.com",
+    "slwatch.co", "slmaxed.com", "sltube.org", "streamlare.cc"
+  ];
+  for (var i = 0; i < supported.length; i++) {
+    if (host === supported[i] || host.slice(-(supported[i].length + 1)) === "." + supported[i])
+      return true;
+  }
+  return false;
+}
 function getVideoSources(episodeUrl) {
   return getPage(episodeUrl).then(function(html) {
     var candidates = [], seen = {}, failures = [];
@@ -284,6 +300,10 @@ function getVideoSources(episodeUrl) {
           headers: { "User-Agent": UA, "Referer": episodeUrl },
           label: "Top Cinema direct"
         }]);
+      }
+      if (!hasBundledExtractor(candidate.host)) {
+        failures.push(candidate.host + ": no bundled Zangetsu extractor for this server");
+        return Promise.resolve([]);
       }
       if (typeof extractVideo !== "function") {
         failures.push(candidate.host + ": extractVideo helper unavailable");
