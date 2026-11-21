@@ -197,7 +197,7 @@ function getDetail(url) {
     var rating = firstMatch(html, [
       /([0-9]+(?:\.[0-9]+)?)\s*\/\s*10\s*stars/i,
       /([0-9]+(?:\.[0-9]+)?)\s*IMDb/i,
-      /"ratingValue"\s*:\s*"?( [0-9.]+ )"?/i
+      /"ratingValue"\s*:\s*"?([0-9.]+)"?/i
     ]);
     var watch = "", linkRe = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, link;
     while ((link = linkRe.exec(String(html || ""))) !== null) {
