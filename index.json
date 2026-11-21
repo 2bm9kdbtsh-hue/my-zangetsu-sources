@@ -5,7 +5,7 @@
     {
       "id": "topcinemaa",
       "name": "Top Cinema",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "type": "movie",
       "lang": "ar",
       "file": "providers/topcinemaa.js",
