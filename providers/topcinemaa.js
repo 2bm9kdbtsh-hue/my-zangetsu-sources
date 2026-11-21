@@ -3,7 +3,7 @@
  */
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
-var VERSION = "1.4.2";
+var VERSION = "1.4.3";
 var UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36";
 
 function getInfo() {
@@ -123,19 +123,18 @@ function fetchRow(row) {
   });
 }
 function getHome() {
+  // Keep source opening responsive: the home screen needs only the homepage
+  // response. Category pages are fetched on demand by getHomePage().
   return getPage(BASE_URL + "/").then(function(html) {
-    var rows = [
-      { id: "latest-movies", title: "أحدث الأفلام", url: BASE_URL + "/movies/" },
-      { id: "latest-series", title: "أحدث المسلسلات", url: BASE_URL + "/series/" }
-    ];
-    var cats = parseCategoryLinks(html);
-    var tasks = [
-      Promise.resolve({ id: "latest", title: "المضاف حديثاً", items: parseItems(html) }),
-      fetchRow({ id: rows[0].url, title: rows[0].title }),
-      fetchRow({ id: rows[1].url, title: rows[1].title })
-    ];
-    cats.slice(0, 3).forEach(function(row) { tasks.push(fetchRow(row)); });
-    return Promise.all(tasks);
+    var sections = [{
+      id: "latest",
+      title: "المضاف حديثاً",
+      items: parseItems(html)
+    }];
+    parseCategoryLinks(html).slice(0, 5).forEach(function(row) {
+      sections.push({ id: row.id, title: row.title, items: [] });
+    });
+    return sections;
   }).catch(function() { return []; });
 }
 function getHomePage(rowId, page) {
