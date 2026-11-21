@@ -15,7 +15,7 @@
       "id": "tvmaze-series",
       "name": "TVmaze Series Metadata",
       "version": "1.0.0",
-      "type": "series",
+      "type": "movie",
       "lang": "en",
       "file": "providers/tvmaze-series.js",
       "nsfw": false
