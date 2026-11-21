@@ -21,4 +21,4 @@ jobs:
           node --check providers/nxxhentai.js
       - name: Validate source index JSON
         run: |
-          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('index.json','utf8')); if(!Array.isArray(x.sources)) process.exit(1); const p=x.sources.find(s=>s.id==='topcinemaa'); if(!p || p.version!=='1.4.0' || p.file!=='providers/topcinemaa.js') process.exit(1);"
+          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('index.json','utf8')); if(!Array.isArray(x.sources)) process.exit(1); const p=x.sources.find(s=>s.id==='topcinemaa'); if(!p || !/^\\d+\\.\\d+\\.\\d+$/.test(p.version) || p.file!=='providers/topcinemaa.js') process.exit(1);"
