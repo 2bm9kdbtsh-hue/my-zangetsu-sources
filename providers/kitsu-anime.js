@@ -31,7 +31,7 @@ function _card(a) {
   return {
     id: String(a.id), title: _title(a), url: String(a.id),
     cover: _image(a), type: 'anime', sourceId: SOURCE_ID,
-    description: a.attributes.synopsis || '', status: a.attributes.status || 'unknown'
+    description: a.attributes.synopsis || ''
   };
 }
 function search(query, page) {
