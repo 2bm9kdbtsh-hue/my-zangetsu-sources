@@ -5,7 +5,7 @@
     {
       "id": "kitsu-anime",
       "name": "Kitsu Anime Metadata",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "type": "anime",
       "lang": "all",
       "file": "providers/kitsu-anime.js",
@@ -14,7 +14,7 @@
     {
       "id": "tvmaze-series",
       "name": "TVmaze Series Metadata",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "type": "movie",
       "lang": "en",
       "file": "providers/tvmaze-series.js",
