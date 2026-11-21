@@ -3,7 +3,7 @@
  */
 var BASE_URL = "https://topcinemaa.one";
 var SOURCE_ID = "topcinemaa";
-var VERSION = "1.4.1";
+var VERSION = "1.4.2";
 var UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36";
 
 function getInfo() {
@@ -134,7 +134,7 @@ function getHome() {
       fetchRow({ id: rows[0].url, title: rows[0].title }),
       fetchRow({ id: rows[1].url, title: rows[1].title })
     ];
-    cats.forEach(function(row) { tasks.push(fetchRow(row)); });
+    cats.slice(0, 3).forEach(function(row) { tasks.push(fetchRow(row)); });
     return Promise.all(tasks);
   }).catch(function() { return []; });
 }
