@@ -6,8 +6,10 @@ const indexPath = path.join(root, 'index.json');
 const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
 if (!index.name || !Array.isArray(index.sources)) throw new Error('Invalid repository index');
 const ids = new Set();
+const supportedTypes = new Set(['anime', 'movie', 'manga', 'novel']);
 for (const source of index.sources) {
   if (!source.id || ids.has(source.id)) throw new Error('Missing or duplicate source id: ' + source.id);
+  if (!supportedTypes.has(source.type)) throw new Error('Unsupported Zangetsu provider type: ' + source.type);
   ids.add(source.id);
   for (const field of ['name', 'version', 'type', 'lang', 'file']) {
     if (!source[field]) throw new Error('Missing ' + field + ' in ' + source.id);
