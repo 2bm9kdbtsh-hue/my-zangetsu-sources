@@ -23,7 +23,7 @@ function _card(show) {
     id: String(show.id), title: show.name || 'Untitled series', url: String(show.id),
     cover: image, type: 'movie', sourceId: SOURCE_ID,
     description: String(show.summary || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
-    language: show.language || null, status: show.status || 'unknown'
+    language: show.language || null
   };
 }
 function search(query, page) {
