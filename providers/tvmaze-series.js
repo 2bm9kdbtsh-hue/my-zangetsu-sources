@@ -5,7 +5,7 @@ var API = 'https://api.tvmaze.com';
 var VERSION = '1.0.0';
 
 function getInfo() {
-  return { name: 'TVmaze Series Metadata', lang: 'en', baseUrl: API, type: 'series', version: VERSION };
+  return { name: 'TVmaze Series Metadata', lang: 'en', baseUrl: API, type: 'movie', version: VERSION };
 }
 function _request(url) {
   return fetch(url, { headers: { Accept: 'application/json' } }).then(function (r) {
@@ -21,7 +21,7 @@ function _card(show) {
   var image = show.image && (show.image.original || show.image.medium) || null;
   return {
     id: String(show.id), title: show.name || 'Untitled series', url: String(show.id),
-    cover: image, type: 'series', sourceId: SOURCE_ID,
+    cover: image, type: 'movie', sourceId: SOURCE_ID,
     description: String(show.summary || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
     language: show.language || null, status: show.status || 'unknown'
   };
