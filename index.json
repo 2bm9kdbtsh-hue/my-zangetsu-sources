@@ -1,6 +1,6 @@
 {
   "name": "My Zangetsu Sources",
-  "description": "Metadata-only anime and series providers for Zangetsu iOS",
+  "description": "Licensed Internet Archive video sources plus metadata catalogues for anime and series.",
   "sources": [
     {
       "id": "kitsu-anime",
@@ -18,6 +18,24 @@
       "type": "movie",
       "lang": "en",
       "file": "providers/tvmaze-series.js",
+      "nsfw": false
+    },
+    {
+      "id": "archive-licensed-movies",
+      "name": "Internet Archive Licensed Movies & TV",
+      "version": "1.0.0",
+      "type": "movie",
+      "lang": "all",
+      "file": "providers/archive-licensed-movies.js",
+      "nsfw": false
+    },
+    {
+      "id": "archive-licensed-anime",
+      "name": "Internet Archive Licensed Anime",
+      "version": "1.0.0",
+      "type": "anime",
+      "lang": "all",
+      "file": "providers/archive-licensed-anime.js",
       "nsfw": false
     }
   ]
