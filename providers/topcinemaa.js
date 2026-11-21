@@ -267,6 +267,7 @@ function getVideoSources(episodeUrl) {
     if (!candidates.length) throw new Error("Top Cinema: لم يتم العثور على روابط خوادم مشاهدة صالحة.");
     if (typeof extractVideo !== "function")
       throw new Error("Top Cinema: بيئة Zangetsu لا توفر extractVideo لاستخراج مشغلات الخوادم الخارجية.");
+    var failures = [];
     var jobs = candidates.slice(0, 20).map(function(embedUrl) {
       return Promise.resolve(extractVideo(embedUrl, {
         headers: { "User-Agent": UA, "Referer": episodeUrl }
@@ -300,7 +301,7 @@ function getVideoSources(episodeUrl) {
         });
       });
       if (!output.length)
-        throw new Error("Top Cinema: لم يُرجع أي خادم رابط فيديو مباشر قابلاً للتشغيل. قد يتطلب الخادم حماية أو استخراجاً غير مدعوم.");
+        throw new Error("Top Cinema: لم يُرجع أي خادم رابط فيديو مباشر قابلاً للتشغيل. " + failures.join(" | ").slice(0, 700) + " قد يتطلب الخادم حماية أو استخراجاً غير مدعوم.");
       return output;
     });
   });
