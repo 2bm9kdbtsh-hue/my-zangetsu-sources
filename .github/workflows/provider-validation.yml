@@ -26,7 +26,7 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('index.json', 'utf8'));
           if (!Array.isArray(manifest.sources)) throw new Error('index.sources must be an array');
           const source = manifest.sources.find((item) => item.id === 'topcinemaa');
-          if (!source || !/^\\d+\\.\\d+\\.\\d+$/.test(source.version) || source.file !== 'providers/topcinemaa.js') {
+          if (!source || !/^\d+\.\d+\.\d+$/.test(source.version) || source.file !== 'providers/topcinemaa.js') {
             throw new Error('Top Cinema manifest entry is invalid');
           }
           const provider = fs.readFileSync(source.file, 'utf8');
