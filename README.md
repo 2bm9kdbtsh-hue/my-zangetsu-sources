@@ -34,9 +34,9 @@ https://raw.githubusercontent.com/2bm9kdbtsh-hue/my-zangetsu-sources/main/index.
 
 ## Top Cinema 1.4.0 notes
 
-- Search no longer intentionally filters out series and anime titles.
+- Search no longer intentionally filters out series and anime titles. Movie and series listing routes are confirmed as `/movies/` and `/series/`.
 - Home rows include the site's movie and series listing pages and detected content categories.
 - Detail parsing reads descriptions, covers, IMDb-style ratings, genres, episode links, season links, and the watch-page URL where present.
 - Playback extraction uses the provider runtime's `extractVideo` function for discovered external servers. It does not invent or call undocumented Top Cinema/VideoTube API endpoints.
-- Direct playback still depends on the installed Zangetsu runtime supporting `extractVideo` and on the external host returning a playable media URL. Server-side embed restrictions (including HTTP 403) may prevent extraction.
-- This repository is a provider/index repository, not the Zangetsu application source. An app build and in-player playback test cannot be run from this repository alone.
+- The site's watch page currently lists VideoTube, UpDown, StreamWish, Doodstream, Filelions, Streamtape, LuluStream, Uqload, Filemoon, and Mixdrop; the provider recognizes these host families and delegates them to the installed Zangetsu `extractVideo` runtime. Direct playback still depends on runtime support and the host returning a playable media URL. The observed VideoTube embed returned HTTP 403 during external inspection.
+- This repository is a provider/index repository, not the Zangetsu application source. The separate `rabanime-zangetsu` repository associated with this account currently has an empty root (`contents: []`), so an app build and in-player playback test cannot be run from the available repositories.
